@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RED FOLDER // Secure Access</title>
+  <style>
+    :root{--green:#0aff0a;--bg:#000;--muted:#777}
+    html,body{height:100%;}
+    body {
+      background-color: var(--bg);
+      color: var(--green);
+      font-family: "Consolas", monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .terminal {
+      border: 2px solid var(--green);
+      padding: 20px;
+      width: 92%;
+      max-width: 900px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    #input {
+      width: 100%;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--green);
+      font-size: 18px;
+      margin-top: 15px;
+    }
+
+    .hidden-content {
+      display: none;
+      margin-top: 20px;
+      color: #ff0000;
+      border-top: 1px solid var(--green);
+      padding-top: 15px;
+    }
+
+    .files {display:flex;gap:18px;flex-wrap:wrap}
+    .folder {border:1px dashed var(--green);padding:12px 16px;cursor:pointer;min-width:160px}
+    .folder:hover{background:rgba(10,255,10,0.03)}
+
+    .viewer {position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:50}
+    .doc {background:#0b0b0b;border:2px solid var(--green);width:90%;max-width:900px;padding:18px;box-sizing:border-box;color:#ddd}
+    .doc .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .btn{background:none;border:1px solid var(--green);color:var(--green);padding:6px 10px;cursor:pointer}
+    .pdf-page{background:#071;min-height:360px;padding:18px;color:#000;background:linear-gradient(180deg,#fff,#eee);}
+
+    .redact{background:#000;color:#000;padding:0 8px;border-radius:2px}
+    .redact.show{background:#000;color:transparent;text-shadow:0 0 0 #000}
+
+    .loading {font-size:14px;color:var(--muted);}
+
+    .small {font-size:13px;color:var(--muted)}
+
+    @keyframes blink{
+      0%{opacity:1}
+      50%{opacity:.1}
+      100%{opacity:1}
+    }
+    .cursor{display:inline-block;width:8px;height:16px;background:var(--green);margin-left:6px;vertical-align:middle;animation:blink 1s infinite}
+
+  </style>
+</head>
+<body>
+  <div class="terminal" role="application">
+    <p id="status">SECURE DEVICE // RED FOLDER PROTOCOL<br>ACCESS LEVEL: CLASS Ω<br><br>Enter passcode:</p>
+    <input type="password" id="input" maxlength="12" autofocus autocomplete="off" />
+
+    <div class="hidden-content" id="data" aria-hidden="true">
+      <p>✔ ACCESS GRANTED.<br><span class="small">Select a folder to view (CIA preview mode).</span></p>
+      <br>
+      <div class="files" id="folders">
+        <div class="folder" data-type="txt" data-file="rml_data">📁 RML_DATA</div>
+        <div class="folder" data-type="txt" data-file="safehouses">📁 SAFEHOUSES</div>
+        <div class="folder" data-type="txt" data-file="weapons">📁 WEAPON_ROUTES</div>
+        <div class="folder" data-type="txt" data-file="members">📁 INTERNAL_MEMBERS</div>
+        <div class="folder" data-type="pdf" data-file="marabunta">📁 MARABUNTA (CLASSIFIED)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Viewer Modal -->
+  <div class="viewer" id="viewer" role="dialog" aria-modal="true">
+    <div class="doc" id="doc">
+      <div class="toolbar">
+        <div id="docTitle">Preview</div>
+        <div>
+          <button class="btn" id="closeBtn">CLOSE</button>
+        </div>
+      </div>
+
+      <div id="docBody">
+        <!-- dynamic content -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById("input");
+    const data = document.getElementById("data");
+    const status = document.getElementById("status");
+    const viewer = document.getElementById("viewer");
+    const docBody = document.getElementById("docBody");
+    const docTitle = document.getElementById("docTitle");
+    const closeBtn = document.getElementById("closeBtn");
+
+    const PASSCODE = "120725"; // Code secret RP
+
+    input.addEventListener("keyup", (e) => {
+      if (input.value === PASSCODE) {
+        status.innerHTML = "✔ PASSWORD ACCEPTED.<br>Initializing secure environment...";
+        input.style.display = "none";
+
+        setTimeout(() => { status.innerHTML = "Decrypting files... ███░░░░░ 33%"; }, 800);
+        setTimeout(() => { status.innerHTML = "Decrypting files... ███████░░ 78%"; }, 1700);
+        setTimeout(() => { status.innerHTML = "Decrypting files... ██████████ 100%"; }, 2600);
+        setTimeout(() => { data.style.display = "block"; status.innerHTML = "ACCESS GRANTED."; }, 3400);
+
+      } else if (input.value.length === PASSCODE.length) {
+        input.value = "";
+        status.innerHTML = "❌ Wrong code.";
+      }
+    });
+
+    // dataset for files (simulated content)
+    const files = {
+      rml_data: {
+        title: 'RML_DATA.txt',
+        type: 'txt',
+        content: `RML DATA // COMPRESSED
+
+Détruit
+`
+      },
+      safehouses: {
+        title: 'SAFEHOUSES.txt',
+        type: 'txt',
+        content: `SAFEHOUSE_LIST_V12 (CONFIDENTIAL)
+
+Détruit
+
+Note: Locations partially redacted for field ops.
+`
+      },
+      weapons: {
+        title: 'WEAPON_ROUTES.txt',
+        type: 'txt',
+        content: `WEAPON ROUTES // CLASSIFIED
+
+Détruit
+`
+      },
+      members: {
+        title: 'INTERNAL_MEMBERS.txt',
+        type: 'txt',
+        content: `MEMBERS LIST // CONFIDENTIAL
+
+Détruit
+
+Sensitive sections redacted per protocol.`
+      },
+      marabunta: {
+  title: 'MARABUNTA_DOSSIER',
+  type: 'pdf',
+  pages: [
+    {
+      title: 'MARABUNTA_STRUCTURE.pdf - Page 1',
+      html: `
+        <div class="pdf-page"> 
+          <h2 style="color:#222;margin-top:0">GND - CONFIDENTIAL<br><small style="color:#444">MARABUNTA STRUCTURE</small></h2>
+          <p style="color:#111">Unauthorized access prohibited. All operational details strictly classified.</p>
+          <hr>
+          <p style="color:#111"><strong>SUMMARY:</strong> Known command nodes, storage sites, leadership and logistics.</p>
+          
+          <p style="color:#111"><strong>COORDINATES - VERIFIED SITES:</strong></p>
+          <ul style="color:#111">
+            <li>Entrepôt Sud: 475.57, -1325.02</li>
+            <li>Entrepôt Sud: 498.77, -520.99</li>
+            <li>Entrepôt Sud: 1218.97, -1269.32</li>
+            <li>Entrepôt Nord: -203.26, 6097.35</li>
+            <li>Entrepôt Nord: -534.43, 5296.51</li>
+            <li>Labo (Nord): -531.17, 5338.55</li>
+          </ul>
+
+          <div style="margin-top:12px;background:black;color:black;padding:6px;width:100%">██████████████████████████████████</div>
+        </div>`
+    },
+    {
+      title: 'MARABUNTA_STRUCTURE.pdf - Page 2',
+      html: `
+        <div class="pdf-page"> 
+          <h3 style="color:#222;margin-top:0">MEMBERS // CONFIDENTIAL</h3>
+          <p style="color:#111">Format: Name — Phone — Rank — Image Status</p>
+          <hr>
+          
+          <ul style="color:#111;line-height:20px">
+            <li>Berry Mejia — 555-67873 — Jefe — [REDACTED]</li>
+            <li>Lunara Mejia — 555-45892 — Co-Lead — [REDACTED]</li>
+          </ul>
+          
+          <p style="color:#444;margin-top:10px"><strong>General Network (Unknown Rank / X)</strong></p>
+          <ul style="color:#111;line-height:20px">
+            <li>Julian Garcia — 555-14677 — X — [REDACTED]</li>
+            <li>Thiago Ravarro — 555-89367 — X — [REDACTED]</li>
+            <li>Julio Garcia — 555-59851 — X — [REDACTED]</li>
+            <li>Alejandro Reyes — 555-65639 — X — [REDACTED]</li>
+            <li>Juan Gracias — 555-22364 — X — [REDACTED]</li>
+            <li>Lucha Hernandez — 555-2862 — X — [REDACTED]</li>
+            <li>Tonyo Hernandez — 555-63196 — X — [REDACTED]</li>
+            <li>Berry Mejia — 555-67873 — X — [REDACTED]</li>
+            <li>Luzio Salazar — 555-86328 — X — [REDACTED]</li>
+            <li>Javieró Salazar — 555-8950 — X — [REDACTED]</li>
+            <li>Angel Mija — 555-89210 — X — [REDACTED]</li>
+            <li>Ricardo Salazar — 555-41439 — X — [REDACTED]</li>
+            <li>Rodrigo Ravarro — 555-28269 — X — [REDACTED]</li>
+            <li>Luz Reyes — 555-24037 — X — [REDACTED]</li>
+            <li>Nazario Morales — 555-79131 — X — [REDACTED]</li>
+            <li>Rafael Ortega — 555-79665 — X — [REDACTED]</li>
+            <li>Santiago Rivas — 555-25732 — X — [REDACTED]</li>
+            <li>Mia Mendoza — 555-44012 — X — [REDACTED]</li>
+            <li>Camilo Mendoza — 555-69503 — X — [REDACTED]</li>
+            <li>José Mendoza — 555-27255 — X — [REDACTED]</li>
+            <li>Andres Mendoza — 555-75274 — X — [REDACTED]</li>
+            <li>Gasta Mendazo — 555-62262 — X — [REDACTED]</li>
+          </ul>
+
+          <div style="margin-top:12px;background:black;color:black;padding:6px;width:100%">██████████████████████████████████</div>
+        </div>`
+    },
+    {
+      title: 'MARABUNTA_STRUCTURE.pdf - Page 3',
+      html: `
+        <div class="pdf-page"> 
+          <h3 style="color:#222;margin-top:0">LOGISTICS & OPERATIONAL ROUTES</h3>
+          <p style="color:#111">Data partially confirmed.</p>
+          <ul style="color:#111">
+            <li>Coastal shipments — active</li>
+            <li>Overland convoys — active</li>
+            <li>Local suppliers — unknown</li>
+          </ul>
+          
+          <div style="margin-top:12px;background:black;color:black;padding:6px;">
+            ████████████████████████████████████
+          </div>
+        </div>`
+    }
+  ]
+}
+
+    };
+
+    // open folder handler
+    document.getElementById('folders').addEventListener('click', (ev) => {
+      const folder = ev.target.closest('.folder');
+      if (!folder) return;
+      const key = folder.dataset.file;
+      const file = files[key];
+      if (!file) return;
+
+      // CIA style pre-load
+      showLoader(`OPENING: /${key.toUpperCase()}/
+Access Level: Class Ω
+
+Scanning File Integrity...`);
+
+      setTimeout(() => {
+        // then open content
+        if (file.type === 'txt') openText(file);
+        else if (file.type === 'pdf') openPDF(file);
+      }, 1200);
+    });
+
+    function showLoader(message){
+      docTitle.textContent = 'Secured Preview';
+      docBody.innerHTML = `<pre class=\"loading\">${message}
+Decrypting metadata...
+Building preview layer...
+Ready.</pre>`;
+      viewer.style.display = 'flex';
+    }
+
+    function openText(file){
+      docTitle.textContent = file.title;
+      docBody.innerHTML = `<pre style=\"white-space:pre-wrap;color:#ddd;line-height:1.5\">${escapeHtml(file.content)}</pre>`;
+      viewer.style.display = 'flex';
+    }
+
+    function openPDF(file){
+      docTitle.textContent = 'MARABUNTA // CLASSIFIED';
+      // build multipage simulated PDF with small pager
+      let pagesHtml = '';
+      file.pages.forEach((p, i) => {
+        pagesHtml += `<div class=\"pdf-page-wrapper\" data-page=\"${i}\">${p.html}</div>`;
+      });
+
+      docBody.innerHTML = `
+        <div style=\"display:flex;gap:12px;align-items:center;margin-bottom:10px\">
+          <div class=\"small\">DOCUMENT: MARABUNTA_STRUCTURE.pdf <span style=\"margin-left:8px\">[CONFIDENTIAL]</span></div>
+          <div style=\"margin-left:auto;\"> <button class=\"btn\" id=\"prev\">PREV</button> <button class=\"btn\" id=\"next\">NEXT</button> </div>
+        </div>
+        <div id=\"pdfContainer\">${pagesHtml}</div>`;
+
+      // show only first page
+      const pageEls = docBody.querySelectorAll('.pdf-page-wrapper');
+      pageEls.forEach((el,i)=> el.style.display = i===0 ? 'block' : 'none');
+
+      // attach pager
+      const prev = docBody.querySelector('#prev');
+      const next = docBody.querySelector('#next');
+      let current = 0;
+      prev.addEventListener('click', ()=>{
+        if (current>0){ pageEls[current].style.display='none'; current--; pageEls[current].style.display='block'; }
+      });
+      next.addEventListener('click', ()=>{
+        if (current<pageEls.length-1){ pageEls[current].style.display='none'; current++; pageEls[current].style.display='block'; }
+      });
+
+      viewer.style.display = 'flex';
+    }
+
+    closeBtn.addEventListener('click', ()=>{ viewer.style.display='none'; docBody.innerHTML=''; });
+    viewer.addEventListener('click', (e)=>{ if(e.target===viewer) { viewer.style.display='none'; docBody.innerHTML=''; } });
+
+    function escapeHtml(unsafe) {
+      return unsafe.replace(/[&<>"'`]/g, function(m) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;','`':'&#96;'}[m];
+      });
+    }
+
+  </script>
+</body>
+</html>
